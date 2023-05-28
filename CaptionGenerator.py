@@ -74,7 +74,7 @@ def generateCaption(jsonfile, model_name, transflag=False):
 
  # for loop
     for i in range(len(data)):
-        if data[i]['image'] != None and data[i]['caption'] == None:
+        if data[i]['image'] != None and data[i]['action'] != 'note':
             image = data[i]['image']
             cg.modelready(image, model_name)
             caption = cg.generatecap("this is an image of")

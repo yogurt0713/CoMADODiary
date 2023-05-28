@@ -56,7 +56,7 @@ def convertTime(starttime, interval, num_of_seconds):
 
 if __name__ == '__main__':
     videoPath = sys.argv[1]
-    jsonfile = "test copy.json"
+    jsonfile = "test.json"
     outputDir = "video"
     interval = 60
     starttime = "2023-03-08T03:29:00.000Z"
