@@ -18,18 +18,23 @@ class CaptionGenerator:
         self.vis_processors = None
         self.device = None
 
-    def modelready(self, arg1):
+    def modelready(self, imagefile, model_name):
 
-        # arg1にイメージデータを入れる
-        img = arg1
+        # imgにイメージデータを入れる
+        img = imagefile
         self.raw_image = Image.open(img).convert('RGB')
+        self.model_name = model_name
+        if self.model_name == "blip2_t5":
+            self.model_type = "pretrain_flant5xl"
+        else:
+            self.model_type = "large_coco"
 
         # setup device to use
         self.device = torch.device(
             "cuda") if torch.cuda.is_available() else "cpu"
         # we associate a model with its preprocessors to make it easier for inference.
         self.model, self.vis_processors, _ = load_model_and_preprocess(
-            name="blip2_t5", model_type="pretrain_flant5xl", is_eval=True, device=self.device
+            name=self.model_name, model_type=self.model_type, is_eval=True, device=self.device
         )
         self.vis_processors.keys()
 
@@ -44,35 +49,43 @@ class CaptionGenerator:
 
     def generatecap(self, prompt, num_captions=0):
         # 　キャプションの入力があった時にキャプションを生成する
-        if num_captions != 0:
+        if num_captions != 0 and self.model_name == "blip2_t5":
             result = self.model.generate(
                 {"image": self.image, "prompt": prompt}, num_captions=num_captions)
 
-        else:
+        if num_captions == 0 and self.model_name == "blip2_t5":
             result = self.model.generate(
                 {"image": self.image, "prompt": prompt})
 
+        else:
+            result = self.model.generate(
+                {"image": self.image}, use_nucleus_sampling=True, num_captions=3)
         return result
 
 
 # jsonファイルを読み込んでimageがある場合はキャプションを生成し，captionに追加する
-def generateCaption(jsonfile):
+def generateCaption(jsonfile, model_name, transflag=False):
     with open(jsonfile, 'r', encoding='utf-8-sig') as f:
         data = json.load(f)
 
     cg = CaptionGenerator()
-    trans = Translate()
+    if transflag == True:
+        trans = Translate()
 
- # forで２回繰り返し
+ # for loop
     for i in range(len(data)):
-        if data[i]['image'] != None:
+        if data[i]['image'] != None and data[i]['action'] != 'note':
             image = data[i]['image']
-            cg.modelready(image)
+            cg.modelready(image, model_name)
             caption = cg.generatecap("this is an image of")
-            jcaption = trans.translate(
-                caption, trans.translate_lang[1], trans.translate_lang[0])
-            data[i]['caption'] = jcaption
-            print(caption)
+            if transflag == True:
+                jcaption = trans.translate(
+                    caption, trans.translate_lang[1], trans.translate_lang[0])
+                data[i]['caption'] = jcaption
+
+            else:
+                data[i]['caption'] = caption
+        print(data[i]['caption'])
 
     with open(jsonfile, 'w', encoding='utf-8-sig') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
@@ -80,4 +93,5 @@ def generateCaption(jsonfile):
 
 if __name__ == '__main__':
     jsonfile = sys.argv[1]
-    generateCaption(jsonfile)
+    model_name = sys.argv[2]  # blip2_t5 or blip_caption
+    generateCaption(jsonfile, model_name)

@@ -3,7 +3,7 @@ import json
 import sys
 import datetime
 import time
-
+import os
 # mp4ファイルを読み込んで，指定秒ごとに静止画生成
 
 
@@ -17,7 +17,8 @@ def generateTimelapse(videoPath, jsonfile, outputDir, interval, starttime):
     subprocess.call(command)
 
     # キャプチャファイルのファイルリストを作成
-    file_list = [output_file % i for i in range(1, int(interval) + 1)]
+    file_count = len(os.listdir(outputDir))
+    file_list = [output_file % (i+1) for i in range(file_count)]
     print(file_list)
 
     timelapse = []
@@ -56,7 +57,7 @@ def convertTime(starttime, interval, num_of_seconds):
 if __name__ == '__main__':
     videoPath = sys.argv[1]
     jsonfile = "test.json"
-    outputDir = "output"
+    outputDir = "video"
     interval = 60
     starttime = "2023-03-08T03:29:00.000Z"
     generateTimelapse(videoPath, jsonfile, outputDir, interval, starttime)
