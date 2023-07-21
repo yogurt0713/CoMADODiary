@@ -56,8 +56,8 @@ def convertTime(starttime, interval, num_of_seconds):
 
 if __name__ == '__main__':
     videoPath = sys.argv[1]
-    jsonfile = "test.json"
-    outputDir = "video"
+    jsonfile = sys.argv[2]
+    outputDir = sys.argv[3]
     interval = 60
-    starttime = "2023-03-08T03:29:00.000Z"
+    starttime = sys.argv[4]
     generateTimelapse(videoPath, jsonfile, outputDir, interval, starttime)

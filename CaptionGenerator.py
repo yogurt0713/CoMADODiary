@@ -59,7 +59,7 @@ class CaptionGenerator:
 
         else:
             result = self.model.generate(
-                {"image": self.image}, use_nucleus_sampling=True, num_captions=3)
+                {"image": self.image, "prompt": prompt}, use_nucleus_sampling=True, num_captions=3)
         return result
 
 
@@ -77,7 +77,8 @@ def generateCaption(jsonfile, model_name, transflag=False):
         if data[i]['image'] != None and data[i]['action'] != 'note':
             image = data[i]['image']
             cg.modelready(image, model_name)
-            caption = cg.generatecap("this is an image of")
+            caption = cg.generatecap(
+                "describe the scene and object that goes along with this image.")
             if transflag == True:
                 jcaption = trans.translate(
                     caption, trans.translate_lang[1], trans.translate_lang[0])
