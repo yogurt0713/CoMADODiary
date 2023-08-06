@@ -3,7 +3,7 @@ import sys
 
 
 def convertCoMADOJson(filename, convertedfilename, imagePath):
-    # jsonファイルを読み込んで新しいjsonフォーマットに変換する
+    # jsonファイルを読み込んで新しいjsonフォーマットに変換する（time, action, caption, image)
     with open(filename, 'r') as f:
         data = json.load(f)
 
@@ -17,16 +17,19 @@ def convertCoMADOJson(filename, convertedfilename, imagePath):
         if save == '指差し':
             action = 'point'
 
-        if save == 'ふせん' or save == '指差し':
-            time = data[i]['time']
-            caption = data[i]['noteText']
-            image = imagePath + '/' + data[i]['image']
+        if save == 'ハート':
+            action = 'like'
 
-            diary.append({'time': time, 'action': action,
-                          'caption': caption, 'image': image})
+        time = data[i]['time']
+        caption = data[i]['noteText']
+        image = imagePath + '/' + data[i]['image']
+
+        diary.append({'time': time, 'action': action,
+                      'caption': caption, 'image': image})
 
     print(diary)
-    with open(convertedfilename, 'w', encoding='utf-8-sig') as f:
+    with open(convertedfilename, 'w', encoding='utf-8') as f:
+        # ensure_acii=Falseで日本語を文字化けさせない
         json.dump(diary, f, indent=4, ensure_ascii=False)
 
 

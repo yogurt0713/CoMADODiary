@@ -11,7 +11,9 @@ from translate import Translate
 
 
 class CaptionGenerator:
+    # キャプション生成する静止画を読み込んで使用するモデルを選択，初期化する
     def __init__(self):
+        # 初期化
         self.image = None
         self.raw_image = None
         self.model = None
@@ -44,28 +46,58 @@ class CaptionGenerator:
 
         print("model ready")
 
-        # ここの戻り値が戻ってきたらプロンプトテキストボックスをreadyにする
         return "ready"
 
-    def generatecap(self, prompt, num_captions=0):
+    def generatecap(self, prompt, num_captions=1):
         # 　キャプションの入力があった時にキャプションを生成する
-        if num_captions != 0 and self.model_name == "blip2_t5":
+        if self.model_name == "blip2_t5":
+            print("num caption is not zero and model name blip2_t5.")
             result = self.model.generate(
                 {"image": self.image, "prompt": prompt}, num_captions=num_captions)
 
-        if num_captions == 0 and self.model_name == "blip2_t5":
-            result = self.model.generate(
-                {"image": self.image, "prompt": prompt})
-
         else:
+            print("else")
             result = self.model.generate(
-                {"image": self.image, "prompt": prompt}, use_nucleus_sampling=True, num_captions=3)
+                {"image": self.image, "prompt": prompt}, use_nucleus_sampling=True, num_captions=num_captions)
+
         return result
 
 
+class CaptionJsonGenerator:
+    def __init__(self, jsonfile, model_name, transflag=False):
+        with open(jsonfile, 'r', encoding='utf-8') as f:
+            self.data = json.load(f)
+        self.model_name = model_name
+        self.transflag = transflag
+
+        self.cg = CaptionGenerator()
+        if self.transflag == True:
+            self.trans = Translate()
+
+    def capgenerate2json(self, prompt, num_captions):
+        data = self.data
+
+        for i in range(len(data)):
+            if data[i]['image'] != None and data[i]['action'] != 'note':
+                image = data[i]['image']
+                self.cg.modelready(image, self.model_name)
+                caption = self.cg.generatecap(prompt, num_captions)
+                if self.transflag == True:
+                    jcaption = self.trans.translate(
+                        caption, self.trans.translate_lang[1], self.trans.translate_lang[0])
+                    data[i]['caption'] = jcaption
+                else:
+                    data[i]['caption'] = caption
+
+            print(data[i]['caption'])
+
+        with open(jsonfile, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+
+
 # jsonファイルを読み込んでimageがある場合はキャプションを生成し，captionに追加する
-def generateCaption(jsonfile, model_name, transflag=False):
-    with open(jsonfile, 'r', encoding='utf-8-sig') as f:
+""" def generateCaption(jsonfile, model_name, transflag=False):
+    with open(jsonfile, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
     cg = CaptionGenerator()
@@ -88,11 +120,21 @@ def generateCaption(jsonfile, model_name, transflag=False):
                 data[i]['caption'] = caption
         print(data[i]['caption'])
 
-    with open(jsonfile, 'w', encoding='utf-8-sig') as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+    with open(jsonfile, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False) """
 
 
 if __name__ == '__main__':
     jsonfile = sys.argv[1]
     model_name = sys.argv[2]  # blip2_t5 or blip_caption
-    generateCaption(jsonfile, model_name)
+    prompt = sys.argv[3]
+    num_captions = 1
+
+    cjg = CaptionJsonGenerator(jsonfile, model_name)
+
+    # sys.argv[4]がある場合はキャプション生成数を指定
+    if len(sys.argv) == 5:
+        num_captions = int(sys.argv[4])
+
+    print(num_captions)
+    cjg.capgenerate2json(prompt, num_captions)
