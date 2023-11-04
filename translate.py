@@ -10,7 +10,7 @@ class Translate:
 
     def __init__(self):
         self.url = "https://api-free.deepl.com/v2/translate"
-        self.auth_key = "1192b11a-b2b6-20b9-32e9-c277a1091015:fx"
+        self.auth_key = ""
         self.params = {
             "auth_key": self.auth_key,
             "text": "",
